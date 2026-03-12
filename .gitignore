@@ -1,0 +1,11 @@
+# Python cache files
+__pycache__/
+
+# Virtual environment folder
+.venv/
+
+# VSCode editor settings
+.vscode/
+
+# Test packet capture files (traffic)
+*.pcap
