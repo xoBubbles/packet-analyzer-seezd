@@ -18,11 +18,11 @@ class ICMPParser:
         code_name = ICMP_CODES.get(icmp_type, {}).get(icmp_code, "Unknown")
 
         parsed_packet = {
-            "Protocol": "ICMP",
-            "Type": icmp_type,
-            "Type Name": type_name,
-            "Code": icmp_code,
-            "Checksum": checksum,
+            "type": "ICMP",
+            "icmp_type": icmp_type,
+            "icmp_type_name": type_name,
+            "icmp_code": icmp_code,
+            "checksum": checksum,
         }
         if code_name is not None:
             parsed_packet["Code Name"] = code_name

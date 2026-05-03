@@ -1,4 +1,4 @@
-
+from src.utils.formatters import format_mac
 
 class EthernetParser:
     def __init__(self, strict=True):
@@ -12,8 +12,8 @@ class EthernetParser:
         ether_type_bytes = packet_bytes[12:14]
         payload = packet_bytes[14:]
         
-        dst_mac = dst_mac_bytes.hex(":")
-        src_mac = src_mac_bytes.hex(":")
+        dst_mac = format_mac(dst_mac_bytes)
+        src_mac = format_mac(src_mac_bytes)
         ether_type = int.from_bytes(ether_type_bytes, 'big') #Always big endian in ethernet packets | This will be used for l3 parsing
 
         ether_type_name = {

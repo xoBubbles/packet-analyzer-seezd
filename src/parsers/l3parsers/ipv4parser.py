@@ -1,4 +1,4 @@
-
+from src.utils.formatters import format_ipv4
 
 class Ipv4Parser:
     def __init__(self, strict=True):
@@ -39,15 +39,16 @@ class Ipv4Parser:
         time_to_live = packet_bytes[8]
         protocol = packet_bytes[9]
         header_checksum = int.from_bytes(packet_bytes[10:12], "big")
-        src_ip = packet_bytes[12:16]
-        dst_ip = packet_bytes[16:20]
+        src_ip = format_ipv4(packet_bytes[12:16])
+        dst_ip = format_ipv4(packet_bytes[16:20])
         flags = flags_frag_offset >> 13
         fragment_offset = flags_frag_offset & 0x1FFF
         options = packet_bytes[20:header_length_bytes] if header_length_bytes > 20 else b"" # Extract options from header
 
         payload = packet_bytes[header_length_bytes:total_packet_length]
-        
+
         return {
+            "type": "IPv4",
             "version": version,
             "internet_header_length": internet_header_len,
             "header_length_bytes": header_length_bytes,

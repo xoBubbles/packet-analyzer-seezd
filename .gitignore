@@ -7,5 +7,6 @@ __pycache__/
 # VSCode editor settings
 .vscode/
 
-# Test packet capture files (traffic)
-*.pcap
+# Pcaps from my network
+mycaptures/
+*.pcapng

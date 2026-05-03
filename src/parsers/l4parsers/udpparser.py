@@ -19,14 +19,14 @@ class UDPParser:
         checksum = int.from_bytes(udp_header[6:8], "big")
 
         parsed_packet = {
-            "Protocol": "UDP",
-            "Source Port": src_port,
-            "Source Port Name": get_port_info(src_port),
-            "Destination Port": dst_port,
-            "Destination Port Name": get_port_info(dst_port),
-            "Length": length,
-            "Checksum": checksum,
-            "Payload Length": len(udp_payload),
+            "type": "UDP",
+            "src_port": src_port,
+            "src_port_name": get_port_info(src_port),
+            "dst_port": dst_port,
+            "dst_port_name": get_port_info(dst_port),
+            "length": length,
+            "checksum": checksum,
+            "payload_length": len(udp_payload),
             #"Payload": udp_payload, Add payload later; could get noisy without DNS parsing
         }
         return parsed_packet

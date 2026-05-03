@@ -2,9 +2,11 @@ import struct
 from collections import namedtuple
 from src.parsers.l2parsers.ethernet import EthernetParser
 from src.parsers.l3parsers.ipv4parser import Ipv4Parser
+from src.parsers.l3parsers.arpparser import ArpParser
 from src.parsers.l4parsers.icmpparser import ICMPParser
 from src.parsers.l4parsers.udpparser import UDPParser
 from src.parsers.l4parsers.tcpparser import TCPParser
+
 
 version = "v0.1"
 GlobalHeader = namedtuple("GlobalHeader", "ver_maj ver_min gmt_to_local sigfigs snap_len linktype")
@@ -33,9 +35,9 @@ ETHERTYPES = {
 }
 
 L3PARSERS = {
-    0x0800: Ipv4Parser()
+    0x0800: Ipv4Parser(),
     #0x86DD: "ipv6parser",
-    #0x0806: "arpparser",
+    0x0806: ArpParser(),
     #0x8100: "802vlanparser"
 }
 
@@ -61,16 +63,6 @@ L4PARSERS = {
     1: ICMPParser(),
     6: TCPParser(),
     17: UDPParser(),
-}
-
-#Logs
-all_packets = []
-packet = {
-    "number": None,
-    "header": None,
-    "l2": None,
-    "l3": None,
-    "l4": None
 }
 
 
@@ -150,96 +142,73 @@ def run_l4_parser(data, parser):
     l4 = parser.parse(data)
     return l4
 
+class Analyzer:
+    def __init__(self, strict=True):
+        self.strict = strict
 
-def format_ipv4(ip_bytes): # Print helper for ipv4
-    return ".".join(str(byte) for byte in ip_bytes)
-
-with open("test_50.pcap", "rb") as packets_file:
-    
-    magic = packets_file.read(4)
-    endian, time_precision = check_endian(magic)
-
-    raw_global_header = packets_file.read(20)
-    unpacked_global_header = unpack_network_info(raw_global_header, endian)
-
-    print_link_layer_type(unpacked_global_header.linktype)
-    l2_parser = get_l2_parser(unpacked_global_header.linktype)
-
-    packet_number = 0
-    while True:
-        packet_number += 1
-        packet["number"] = packet_number
-        raw_packet_header = packets_file.read(16)
-        if len(raw_packet_header) < 16:
-            print(f"Reading completed.\n")
-            break
+    def analyze(self, file_path):
+        with open(file_path, "rb") as packets_file:
+            return self._process_file(packets_file)
         
-        unpacked_packet_header = unpack_packet_header(raw_packet_header, endian, packet_number)
-        packet["header"] = unpacked_packet_header
+    def _process_file(self, packets_file):
+        magic = packets_file.read(4)
+        endian, time_precision = check_endian(magic)
 
-        data = packets_file.read(unpacked_packet_header.incl_len)
-        if len(data) < unpacked_packet_header.incl_len:
-            print("Packet is truncated.")
-            break
-        
-        l2_info = run_l2_parser(data, l2_parser)
-        packet["l2"] = l2_info
-        print("Layer 2 complete.")
+        raw_global_header = packets_file.read(20)
+        unpacked_global_header = unpack_network_info(raw_global_header, endian)
 
-        ethertype = packet["l2"]["ethertype"]
-        l3_parser = get_l3_parser(ethertype)
-        if l3_parser == "skip":
-            continue
-        l3_info = run_l3_parser(packet["l2"]["payload"], l3_parser)
-        packet["l3"] = l3_info
-        print("Layer 3 complete.")
+        print_link_layer_type(unpacked_global_header.linktype)
+        l2_parser = get_l2_parser(unpacked_global_header.linktype)
 
-        protocol = packet["l3"]["protocol"]
-        l4_parser = get_l4_parser(protocol)
-        if l4_parser == "skip":
-            continue
-        l4_info = run_l4_parser(packet["l3"]["payload"], l4_parser)
-        packet["l4"] = l4_info
-        print("Layer 4 complete.")
+        all_packets = []
+        packet_number = 0
+        while True:
+            packet = {
+                "number": None,
+                "header": None,
+                "l2": None,
+                "l3": None,
+                "l4": None
+            }
 
-        #Test packet printing
-        src_ip = format_ipv4(packet["l3"]["src_ip"])
-        dst_ip = format_ipv4(packet["l3"]["dst_ip"])
-        proto_name = IP_PROTOCOLS.get(packet["l3"]["protocol"], "UNKNOWN")
-        print(f'Packet #{packet["number"]}')
-        print(f'    L2: {packet["l2"]["src_mac"]} -> {packet["l2"]["dst_mac"]}')
-        print(f'    L3: {src_ip} -> {dst_ip} | protocol {proto_name} ({packet["l3"]["protocol"]})')
-        l4 = packet.get("l4")
-
-        if l4:
-            l4_proto = l4.get("Protocol", "UNKNOWN")
-
-            if l4_proto == "ICMP":
-                print(
-                    f"    L4: ICMP | "
-                    f"{l4.get('Type Name', 'Unknown')} "
-                    f"(type {l4.get('Type')}, code {l4.get('Code')})"
-                )
-
-                if "Identifier" in l4 and "Sequence" in l4:
-                    print(
-                        f"        id={l4['Identifier']} "
-                        f"seq={l4['Sequence']}"
-                    )
-
-            elif l4_proto == "UDP":
-                print(f"    L4: UDP | {l4['Source Port']} ({l4['Source Port Name']}) -> {l4['Destination Port']} ({l4['Destination Port Name']})\n")
+            packet_number += 1
+            packet["number"] = packet_number
+            raw_packet_header = packets_file.read(16)
+            if len(raw_packet_header) < 16:
+                print(f"Reading completed.\n")
+                break
             
-            elif l4_proto == "TCP":
-                print(f"    L4: TCP | "
-                      f"{l4['Source Port']} ({l4['Source Port Name']}) -> {l4['Destination Port']} ({l4['Destination Port Name']}) | "
-                      f"{l4['Flags Str']}\n")
+            unpacked_packet_header = unpack_packet_header(raw_packet_header, endian, packet_number)
+            packet["header"] = unpacked_packet_header
 
-        else:
-            print("    L4: No supported L4 parser")
-        all_packets.append(packet)
+            data = packets_file.read(unpacked_packet_header.incl_len)
+            if len(data) < unpacked_packet_header.incl_len:
+                print("Packet is truncated.")
+                break
+            
+            l2_info = run_l2_parser(data, l2_parser)
+            packet["l2"] = l2_info
+            print("Layer 2 complete.")
 
+            ethertype = packet["l2"]["ethertype"]
+            l3_parser = get_l3_parser(ethertype)
+            if l3_parser == "skip":
+                continue
+            l3_info = run_l3_parser(packet["l2"]["payload"], l3_parser)
+            packet["l3"] = l3_info
+            print("Layer 3 complete.")
 
+            protocol = packet["l3"].get("protocol")
 
-        
+            if protocol is not None:
+                l4_parser = get_l4_parser(protocol)
+
+                if l4_parser != "skip":
+                    l4_info = run_l4_parser(packet["l3"]["payload"], l4_parser)
+                    packet["l4"] = l4_info
+            print("Layer 4 complete.")
+
+            all_packets.append(packet)
+        return all_packets
+
 

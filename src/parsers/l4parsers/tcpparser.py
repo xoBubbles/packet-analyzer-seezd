@@ -45,20 +45,20 @@ class TCPParser():
         payload = packet_bytes[data_offset:]
 
         parsed_packet = {
-            "Protocol": "TCP",
-            "Source Port": src_port,
-            "Source Port Name": get_port_info(src_port),
-            "Destination Port": dst_port,
-            "Destination Port Name": get_port_info(dst_port),
-            "Sequence": seq,
-            "Acknowledgment": ack,
-            "Header Length Bytes": data_offset,
-            "Flags": flags,
-            "Flags Str": flag_str,
-            "Window": window,
-            "Checksum": checksum,
-            "Urgent Pointer": urgent,
-            "Payload Length": len(payload),
+            "type": "TCP",
+            "src_port": src_port,
+            "src_port_name": get_port_info(src_port),
+            "dst_port": dst_port,
+            "dst_port_name": get_port_info(dst_port),
+            "sequence": seq,
+            "acknowledgment": ack,
+            "header_length_bytes": data_offset,
+            "flags": flags,
+            "flags_str": flag_str,
+            "window": window,
+            "checksum": checksum,
+            "urgent_pointer": urgent,
+            "payload_length": len(payload),
             #"Payload": payload, Like udp; could get noisy for now
         }
 
