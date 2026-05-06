@@ -1,4 +1,5 @@
 from src.utils.formatters import format_ipv4
+from src.maps.ip_protocol_map import get_ip_protocol_name
 
 class Ipv4Parser:
     def __init__(self, strict=True):
@@ -38,6 +39,7 @@ class Ipv4Parser:
         flags_frag_offset = int.from_bytes(packet_bytes[6:8], "big")
         time_to_live = packet_bytes[8]
         protocol = packet_bytes[9]
+        protocol_name = get_ip_protocol_name(protocol)
         header_checksum = int.from_bytes(packet_bytes[10:12], "big")
         src_ip = format_ipv4(packet_bytes[12:16])
         dst_ip = format_ipv4(packet_bytes[16:20])
@@ -59,6 +61,7 @@ class Ipv4Parser:
             "fragment_offset": fragment_offset,
             "ttl": time_to_live,
             "protocol": protocol,
+            "protocol_name": protocol_name,
             "header_checksum": header_checksum,
             "src_ip": src_ip,
             "dst_ip": dst_ip,

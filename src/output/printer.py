@@ -1,16 +1,17 @@
 
+def print_packet(packet, verbose = False):
+    if verbose:
+        print(f"Packet #{packet['number']}")
+        if packet.get("l2"):
+            print_l2(packet["l2"])
 
-def print_packet(packet):
-    print(f"Packet #{packet['number']}")
+        if packet.get("l3"):
+            print_l3(packet["l3"])
 
-    if packet.get("l2"):
-        print_l2(packet["l2"])
-
-    if packet.get("l3"):
-        print_l3(packet["l3"])
-
-    if packet.get("l4"):
-        print_l4(packet["l4"])
+        if packet.get("l4"):
+            print_l4(packet["l4"])
+    else:
+        print(f"[{packet['number']}] " + packet["l3"]["type"])
 
     print()
 
@@ -19,7 +20,6 @@ def print_l2(l2):
     src_mac = l2.get("src_mac", "unknown")
     dst_mac = l2.get("dst_mac", "unknown")
     ethertype = l2.get("ethertype_name", l2.get("ethertype", "unknown"))
-
     print(f"  L2: {src_mac} -> {dst_mac} | {ethertype}")
 
 

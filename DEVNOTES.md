@@ -26,7 +26,6 @@ Currently supported:
 - TCP
 
 Next:
-- Need to add a registry and put protocols there so L3 can reference protocols in its part of the resulting packet
 - TCP flow tracking
 - DNS parsing
-- Maybe a refactor before things get too messy
+- Add registry to dispatch parsers | I am postponing this for now; it would be overkill
